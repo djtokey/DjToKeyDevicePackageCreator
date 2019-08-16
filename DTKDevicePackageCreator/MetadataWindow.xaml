@@ -1,0 +1,44 @@
+﻿<Window x:Class="WpfApplication1.MetadataWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApplication1"
+        mc:Ignorable="d"
+        Title="Metadata" Height="186.229" Width="300" WindowStyle="ToolWindow" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize" Closing="Window_Closing">
+    <Grid>
+        <StackPanel Margin="5">
+            <StackPanel>
+                <TextBlock Text="Title" />
+                <TextBox Text="{Binding Title, Mode=TwoWay}" />
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Text="Description" />
+                <TextBox x:Name="Description" Text="{Binding Description, Mode=TwoWay}" />
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Text="Version" />
+                <TextBox x:Name="Version" Text="{Binding Version, Mode=TwoWay}" />
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Text="Keywords" />
+
+                <Grid Height="17">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90*"/>
+                        <ColumnDefinition Width="10*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBox x:Name="Keywords" Text="{Binding Keywords, Mode=TwoWay}" Grid.Column="0" />
+                    <Button Grid.Column="1" Content="?" Margin="5,0,0,0" />
+                </Grid>
+                
+                
+                
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>
