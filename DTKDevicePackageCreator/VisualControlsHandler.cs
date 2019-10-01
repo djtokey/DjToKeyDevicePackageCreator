@@ -9,7 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace WpfApplication1
+namespace DjToKey.DevicePackageCreator
 {
     public class VisualControlsHandler
     {
