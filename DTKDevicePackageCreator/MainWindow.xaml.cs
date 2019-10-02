@@ -14,7 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace WpfApplication1
+namespace DjToKey.DevicePackageCreator
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
