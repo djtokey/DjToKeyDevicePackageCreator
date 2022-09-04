@@ -1,5 +1,5 @@
 ﻿using Ktos.DjToKey.Models;
-using Midi;
+using Midi.Messages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,7 @@ namespace DjToKey.DevicePackageCreator
     /// </summary>
     public partial class MidiWindow : Window
     {
-        private Midi.InputDevice d;
+        private Midi.Devices.IInputDevice d;
         private bool autonewControl;
         public Device Device;
         public VisualControlsHandler ControlsHandler;
@@ -93,7 +93,7 @@ namespace DjToKey.DevicePackageCreator
                 if (inputDevices.SelectedIndex == -1)
                     return;
 
-                d = Midi.InputDevice.InstalledDevices[inputDevices.SelectedIndex];
+                d = Midi.Devices.DeviceManager.InputDevices[inputDevices.SelectedIndex];
                 d.NoteOn += D_NoteOn;
                 d.NoteOff += D_NoteOff;
                 d.ProgramChange += D_ProgramChange;
@@ -112,7 +112,7 @@ namespace DjToKey.DevicePackageCreator
         {
             InitializeComponent();
 
-            foreach (var d in Midi.InputDevice.InstalledDevices)
+            foreach (var d in Midi.Devices.DeviceManager.InputDevices)
                 inputDevices.Items.Add(d.Name);
         }
 
