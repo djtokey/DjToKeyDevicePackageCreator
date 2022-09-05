@@ -22,33 +22,30 @@ namespace DjToKey.DevicePackageCreator
     public partial class MainWindow : Window
     {                
         private MetadataWindow metadata;
-        private MidiWindow midi;
-        private MapWindow map;
-        private MapFile mapFile;
+        private MidiWindow midi;        
         private VisualControlsHandler vch;
 
-        private ObservableCollection<Device> devices;
+        private Device device;
 
         public MainWindow()
         {
             InitializeComponent();
-            devices = new ObservableCollection<Device>();
-
-            lbDevices.ItemsSource = devices;
+            device = new Device() { Name = "device", Controls = new List<ViewControl>() };
 
             metadata = new MetadataWindow();
             midi = new MidiWindow();
 
-
-            map = new MapWindow();
-            mapFile = new MapFile();
-            map.DataContext = mapFile;
+            
 
             vch = new VisualControlsHandler();
             vch.ControlsCanvas = LayoutRoot;
             vch.DetailsPanel = controlData;
 
             midi.ControlsHandler = vch;
+
+            DataContext = device;
+            vch.Controls = device.Controls;
+            midi.Device = device;
 
             controlType.ItemsSource = Enum.GetValues(typeof(Ktos.DjToKey.Plugins.Device.ControlType));
             
@@ -59,18 +56,6 @@ namespace DjToKey.DevicePackageCreator
             vch.AddRandomControl();
         }        
 
-        private void addDevice(object sender, RoutedEventArgs e)
-        {
-            var i = new InputDialog();
-            i.Title = "New device name";            
-            i.ShowDialog();            
-
-            if (i.DialogResult == true)
-            {
-                devices.Add(new Device() { Name = i.Value, Controls = new List<ViewControl>() });
-            }
-        }
-
         private void changeImage(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog ofd = new Microsoft.Win32.OpenFileDialog();
@@ -78,21 +63,8 @@ namespace DjToKey.DevicePackageCreator
             ofd.Filter = "PNG Image|*.png";
             if (ofd.ShowDialog() ?? false)
             {
-                (lbDevices.SelectedItem as Device).Image = new BitmapImage(new Uri("file://" + ofd.FileName));
+                device.Image = new BitmapImage(new Uri("file://" + ofd.FileName));
             }
-        }
-
-        private void Devices_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (lbDevices.SelectedValue == null)
-            {
-                lbDevices.SelectedIndex = 0;
-                return;
-            }
-
-            DataContext = (lbDevices.SelectedItem as Device);
-            vch.Controls = (lbDevices.SelectedItem as Device).Controls;
-            midi.Device = (lbDevices.SelectedItem as Device);
         }
 
         private void Load(object sender, RoutedEventArgs e)
@@ -109,71 +81,45 @@ namespace DjToKey.DevicePackageCreator
 
         private void loadDevicesFromPackage(string fileName)
         {
-            devices.Clear();            
+            var x = new Device() { Name = "device", Controls = new List<ViewControl>() };
 
             using (var pack = Package.Open(fileName, FileMode.Open))
             {
-                List<string> devicesInPackage = new List<string>();
+                Uri u = new Uri("/device/definition.json", UriKind.Relative);
 
-                foreach (var p in pack.GetParts())
+                if (pack.PartExists(u))
                 {
-                    string x = p.Uri.ToString().TrimStart('/');
-
-                    if (x == "map.json")
-                        continue;
-
-                    x = x.Remove(x.IndexOf('/'));
-
-                    if (x != "_rels" && x != "package")
-                        devicesInPackage.Add(x);
-                }
-
-                foreach (var d in devicesInPackage.Distinct())
-                {
-                    Device x = new Device();
-                    x.Name = d;
-
-                    Uri u = new Uri(string.Format("/{0}/definition.json", x.Name), UriKind.Relative);
-
-                    if (pack.PartExists(u))
+                    var f = pack.GetPart(u).GetStream();
+                    using (StreamReader reader = new StreamReader(f, Encoding.UTF8))
                     {
-                        var f = pack.GetPart(u).GetStream();
-                        using (StreamReader reader = new StreamReader(f, Encoding.UTF8))
-                        {
-                            string json = reader.ReadToEnd();
-                            x.Controls = JsonConvert.DeserializeObject<List<ViewControl>>(json);
-                        }
-                    }
-
-                    u = new Uri(string.Format("/{0}/image.png", x.Name), UriKind.Relative);
-
-                    if (pack.PartExists(u))
-                    {
-                        BitmapImage bitmap;
-
-                        using (var stream = pack.GetPart(u).GetStream())
-                        {
-                            bitmap = new BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.StreamSource = stream;
-                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            bitmap.EndInit();
-                            bitmap.Freeze();
-                        }
-
-                        x.Image = bitmap;
-                    }
-
-                    devices.Add(x);
-                }
-
-                if (pack.PartExists(new Uri("/map.json", UriKind.Relative)))
-                {
-                    using (TextReader tr = new StreamReader(pack.GetPart(new Uri("/map.json", UriKind.Relative)).GetStream()))
-                    {
-                        mapFile.Map = tr.ReadToEnd();
+                        string json = reader.ReadToEnd();
+                        x.Controls = JsonConvert.DeserializeObject<List<ViewControl>>(json);
                     }
                 }
+
+                u = new Uri("/device/image.png", UriKind.Relative);
+
+                if (pack.PartExists(u))
+                {
+                    BitmapImage bitmap;
+
+                    using (var stream = pack.GetPart(u).GetStream())
+                    {
+                        bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.StreamSource = stream;
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                    }
+
+                    x.Image = bitmap;
+                }
+
+                device = x;
+                DataContext = device;
+                vch.Controls = device.Controls;
+                midi.Device = device;
 
                 var packMeta = new PackageMetadata()
                 {
@@ -184,12 +130,7 @@ namespace DjToKey.DevicePackageCreator
                 };
                 metadata.DataContext = packMeta;
             }
-        }
-
-        private void removeDevice(object sender, RoutedEventArgs e)
-        {
-            devices.Remove(lbDevices.SelectedItem as Device);            
-        }
+        }        
 
         private void showMetadata(object sender, RoutedEventArgs e)
         {
@@ -199,12 +140,7 @@ namespace DjToKey.DevicePackageCreator
         private void showMidi(object sender, RoutedEventArgs e)
         {
             midi.Show();
-        }
-
-        private void showMap(object sender, RoutedEventArgs e)
-        {
-            map.Show();
-        }       
+        }        
 
         private void Save(object sender, RoutedEventArgs e)
         {
@@ -226,39 +162,23 @@ namespace DjToKey.DevicePackageCreator
 
             using (var pack = Package.Open(fileName, FileMode.Create))
             {
-                foreach (var d in devices)
+                im = new Uri("/device/image.png", UriKind.Relative);
+                df = new Uri("/device/definition.json", UriKind.Relative);
+
+                if (device.Image != null)
                 {
-                    im = new Uri(string.Format("/{0}/image.png", d.Name), UriKind.Relative);
-                    df = new Uri(string.Format("/{0}/definition.json", d.Name), UriKind.Relative);
+                    var p1 = pack.CreatePart(im, "image/png");
 
-                    if (d.Image != null)
-                    {
-                        var p1 = pack.CreatePart(im, "image/png");
-
-                        PngBitmapEncoder encoder = new PngBitmapEncoder();
-                        encoder.Frames.Add(BitmapFrame.Create(d.Image));
-                        encoder.Save(p1.GetStream());
-                    }
-
-                    var p2 = pack.CreatePart(df, "application/json");
-                    using (TextWriter sw = new StreamWriter(p2.GetStream()))
-                    {
-                        sw.Write(JsonConvert.SerializeObject(d.Controls));
-                    }
+                    PngBitmapEncoder encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(device.Image));
+                    encoder.Save(p1.GetStream());
                 }
 
-                if (!string.IsNullOrEmpty(mapFile.Map))
+                var p2 = pack.CreatePart(df, "application/json");
+                using (TextWriter sw = new StreamWriter(p2.GetStream()))
                 {
-                    Uri mp = new Uri("/map.json", UriKind.Relative);
-                    if (pack.PartExists(mp))
-                        pack.DeletePart(mp);
-
-                    var p3 = pack.CreatePart(new Uri("/map.json", UriKind.Relative), "application/json");
-                    using (TextWriter sw = new StreamWriter(p3.GetStream()))
-                    {
-                        sw.Write(mapFile.Map);
-                    }
-                }
+                    sw.Write(JsonConvert.SerializeObject(device.Controls));
+                }                               
 
                 PackageMetadata packMeta = metadata.DataContext as PackageMetadata;
                 if (packMeta == null) packMeta = new PackageMetadata();

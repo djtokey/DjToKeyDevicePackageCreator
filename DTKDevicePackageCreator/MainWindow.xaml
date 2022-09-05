@@ -77,18 +77,7 @@
             </StackPanel>
 
             <StackPanel Margin="5">
-                <TextBlock Text="Available devices in package:" />
-                <ListBox
-                    x:Name="lbDevices"
-                    Height="100"
-                    SelectionChanged="Devices_SelectionChanged" />
-                <Button Click="addDevice" Content="Add device" />
-                <Button Click="removeDevice" Content="Remove device" />
-            </StackPanel>
-
-            <StackPanel Margin="5">
                 <Button Click="showMetadata" Content="Edit package metadata" />
-                <Button Click="showMap" Content="Edit mapping file" />
                 <Button
                     Margin="0,20,0,0"
                     Click="showMidi"
